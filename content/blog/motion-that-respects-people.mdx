@@ -1,0 +1,56 @@
+---
+title: "Motion that respects people: reduced motion on a cinematic site"
+description: "A cinematic portfolio still has to work with animations off. Here's how the site degrades gracefully instead of breaking."
+date: "2026-09-06"
+cover: "/blog/motion-that-respects-people.jpg"
+tags: ["Frontend Engineering", "React", "Creative Development"]
+placeholder: false
+---
+
+A site full of motion is a promise that it will still make sense when the motion is gone. Some visitors have vestibular disorders; some are on a low-power device; some just switch animations off. The design has to survive all of them.
+
+> Sample article. Replace this file with your own writing in `content/blog/`.
+
+## Content first
+
+The rule I set for this site: **turn off every animation and it should still read as a complete, navigable page.** So:
+
+- Scroll reveals only affect `opacity` and `transform` — never layout.
+- If JavaScript is unavailable, a `<noscript>` rule un-hides anything a reveal would have hidden.
+- The hero entrance is pure CSS, so text is visible without waiting for hydration.
+
+## One source of truth for the preference
+
+Reduced motion comes from two places: the operating system, and a toggle in the command palette. Both feed one small store:
+
+```ts
+export function isMotionReduced() {
+  return state.motionOverride ?? state.systemReduced;
+}
+```
+
+The store also writes `data-motion="reduced"` on the `<html>` element, which lets plain CSS switch off keyframes:
+
+```css
+[data-motion="reduced"] .feather-float,
+[data-motion="reduced"] .feather__layer {
+  animation: none !important;
+}
+```
+
+## What "reduced" means here
+
+Reduced motion isn't "no motion at all" — that would be crude. It means **no motion the visitor didn't ask for**:
+
+| Effect | Full | Reduced |
+| --- | --- | --- |
+| Smooth scrolling (Lenis) | on | off, native scrolling |
+| Feather idle float | on | off |
+| Pointer tilt & parallax | on | off |
+| Feather travel between sections | eased flight | holds the nearest pose |
+| Custom cursor | on (desktop) | off |
+| Particles | drifting | drawn once, static |
+
+## Test it properly
+
+Toggle it from the command palette (`Ctrl/⌘ K`, then "Toggle reduced motion") and tab through the whole site. If anything is hidden, jumpy or unreachable, that's a bug — not a "reduced motion limitation".

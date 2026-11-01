@@ -1,0 +1,72 @@
+---
+title: "A scroll-driven peacock feather, without WebGL"
+description: "How this portfolio's feather is drawn procedurally in SVG, choreographed from a data file, and animated by one requestAnimationFrame loop."
+date: "2026-09-20"
+cover: "/blog/scroll-driven-peacock-feather.jpg"
+tags: ["Creative Development", "Frontend Engineering", "React"]
+placeholder: false
+---
+
+The feather that follows you down this site is the visual centrepiece, so the first question was the obvious one: WebGL or not? I chose **not** — and this note explains why, and how it works.
+
+> Sample article. Replace this file with your own writing in `content/blog/`.
+
+## Why not Three.js?
+
+A 3D model would look impressive in a screenshot, but a portfolio has one job before it can impress anyone: load fast on a mid-range phone. A WebGL scene costs a library, a canvas context, a model file and a lot of battery. The feather is a *single* object that needs to move, tilt and glow — that's well within what the compositor can do with plain layers.
+
+So the feather is an inline SVG. No image asset, no model file.
+
+## Drawing a feather with maths
+
+A peacock feather is a curved quill (the rachis) with thousands of thin barbs branching off it. The generator walks the quill and, at each step, emits one quadratic curve to each side:
+
+```ts
+for (let y = 40; y < 690; y += step) {
+  const { x } = rachisAt(tAtY(y));
+  const len = Math.max(vaneLength(y), wispLength(y));
+  for (const side of [-1, 1]) {
+    const dx = side * len * Math.cos(angle);
+    const dy = -len * Math.sin(angle);
+    segments.push(`M${x} ${y}Q${x + dx * 0.55} ${y + dy * 0.55 + droop} ${x + dx} ${y + dy}`);
+  }
+}
+```
+
+Hundreds of barbs are concatenated into a handful of `<path>` elements, so the DOM stays tiny. A seeded PRNG keeps server and client output identical, which avoids hydration mismatches.
+
+Colour comes from a **single radial gradient in user space**, centred on the eye. Every barb inherits it, so deep blue near the eye fades through teal and emerald to bronze at the edges — with no per-barb colour work.
+
+## Layers instead of SVG animation
+
+Animating things *inside* an SVG repaints the whole graphic every frame. Instead, the feather is three stacked `<svg>` elements — back, main, front — and each layer is moved with CSS transforms, which the browser can hand to the GPU:
+
+```css
+.feather__layer--front {
+  translate: calc(var(--mx) * 9px) calc(var(--my) * 6px);
+  animation: sway-c 9s ease-in-out infinite alternate;
+}
+```
+
+Individual CSS transform properties (`translate`, `rotate`) compose, so pointer parallax and the idle sway don't fight each other. Different depths shift by different amounts, and that small disparity is what sells the depth.
+
+## One controller, zero re-renders
+
+Sections never touch the feather. They only carry a `data-section` attribute. A single hook measures those sections, reads scroll position, and writes a transform straight to the DOM:
+
+```ts
+const c = window.scrollY + window.innerHeight * 0.5;
+const e = smoothstep((c - a.pos) / (b.pos - a.pos));
+pose[key] = lerp(a.pose[key], b.pose[key], e);
+```
+
+The choreography lives in a data file — a list of keyframes like *"in the about section, sit at the right edge, rotated 26°, at 55% opacity"*. Between keyframes the controller adds a little arc, lift and twist so the movement reads as flight rather than sliding.
+
+The loop **sleeps** when nothing is changing, so an idle page costs nothing.
+
+## What I'd do differently
+
+- Ship a static fallback image for very old browsers.
+- Try a real 3D model *only* for the hero, lazy-loaded, on capable devices.
+
+The important part is the contract: the rest of the site only depends on the props of `PeacockFeather`, so swapping the internals later is cheap.
