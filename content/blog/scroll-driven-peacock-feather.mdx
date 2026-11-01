@@ -9,8 +9,6 @@ placeholder: false
 
 The feather that follows you down this site is the visual centrepiece, so the first question was the obvious one: WebGL or not? I chose **not** — and this note explains why, and how it works.
 
-> Sample article. Replace this file with your own writing in `content/blog/`.
-
 ## Why not Three.js?
 
 A 3D model would look impressive in a screenshot, but a portfolio has one job before it can impress anyone: load fast on a mid-range phone. A WebGL scene costs a library, a canvas context, a model file and a lot of battery. The feather is a *single* object that needs to move, tilt and glow — that's well within what the compositor can do with plain layers.
