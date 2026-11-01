@@ -1,4 +1,4 @@
-import nodemailer from "nodemailer";
+import nodemailer, { type Transporter } from "nodemailer";
 
 /**
  * Provider-independent transactional email.
@@ -47,9 +47,9 @@ const resendProvider = (apiKey: string): EmailProvider => ({
   },
 });
 
-let cachedTransporter: nodemailer.Transporter | null = null;
+let cachedTransporter: Transporter | null = null;
 
-function getSmtpTransporter(): nodemailer.Transporter {
+function getSmtpTransporter(): Transporter {
   if (cachedTransporter) return cachedTransporter;
 
   const host = process.env.SMTP_HOST || "smtp.gmail.com";

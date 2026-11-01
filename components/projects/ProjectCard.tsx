@@ -103,7 +103,7 @@ export function ProjectCard({ project, flip, onOpenCaseStudy }: ProjectCardProps
           )}
           {project.links.source && (
             <MagneticButton
-              variant={project.links.live ? "secondary" : "primary"}
+              variant={project.links.live ? "ghost" : "primary"}
               href={project.links.source}
               external
               aria-label={`View source code for ${project.name}`}

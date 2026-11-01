@@ -50,7 +50,7 @@ export default function NowPage() {
                   <li key={item.text} className="flex gap-3">
                     <span aria-hidden className="mt-[0.7em] h-px w-3 shrink-0 bg-turquoise" />
                     <span>
-                      {item.text} <PlaceholderBadge show={"placeholder" in item && item.placeholder} />
+                      {item.text} <PlaceholderBadge show={Boolean("placeholder" in item && item.placeholder)} />
                     </span>
                   </li>
                 ))}
